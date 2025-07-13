@@ -221,7 +221,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  Made with ❤️ by [Your Name]
+  Made by parths19
   
   If you found this project helpful, please consider giving it a ⭐
 </div> 
