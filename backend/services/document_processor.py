@@ -53,15 +53,39 @@ class DocumentProcessor:
 
     def generate_summary(self, text: str) -> str:
         """Generate a summary of the document"""
-        # Truncate text to fit model's max input length (1024 tokens for BART)
-        max_length = 1024
-        truncated_text = text[:max_length]
-        
-        # Generate summary
-        summary_output = self.summarizer(truncated_text, max_length=150, min_length=50, do_sample=False)
-        if not summary_output or not isinstance(summary_output, list) or not summary_output[0]:
+        try:
+            # Split text into chunks that fit within model's max input length
+            chunks = self.text_splitter.split_text(text)
+            
+            # Generate summary for each chunk
+            chunk_summaries = []
+            for chunk in chunks:
+                summary_output = self.summarizer(chunk, max_length=150, min_length=30, do_sample=False)
+                if summary_output and isinstance(summary_output, list) and summary_output[0]:
+                    chunk_summaries.append(summary_output[0]['summary_text'])
+            
+            if not chunk_summaries:
+                return "Failed to generate summary."
+            
+            # If we have multiple chunk summaries, combine them
+            if len(chunk_summaries) > 1:
+                # Join all summaries and generate a final summary
+                combined_summary = " ".join(chunk_summaries)
+                final_summary = self.summarizer(
+                    combined_summary,
+                    max_length=150,
+                    min_length=50,
+                    do_sample=False
+                )
+                if final_summary and isinstance(final_summary, list) and final_summary[0]:
+                    return final_summary[0]['summary_text']
+            
+            # If we only have one summary or final summarization failed
+            return chunk_summaries[0]
+            
+        except Exception as e:
+            print(f"Error in generate_summary: {str(e)}")
             return "Failed to generate summary."
-        return summary_output[0]['summary_text']
 
     def get_relevant_context(self, question: str, k: int = 3) -> str:
         """Retrieve relevant context for a question"""
